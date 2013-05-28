@@ -11,7 +11,7 @@ namespace MegaStore
     /// </summary>
     public class MegaStoreException : MegaApiException
     {
-        public MegaStoreException(string message) : base(null, message) { }
+        public MegaStoreException(string message) : base(3, message) { }
     }
     /// <summary>
     /// to be thrown when 

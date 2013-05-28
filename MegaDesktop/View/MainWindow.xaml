@@ -1,0 +1,382 @@
+﻿<Window x:Class="MegaWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MegaApi;assembly=MegaApi"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:anigif="http://wpfanimatedgif.codeplex.com"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:controls="clr-namespace:MegaDesktop"
+        x:Name="ParentWindow"
+        Title="{Binding Title}" Height="350" Width="414" MinHeight="500" MinWidth="500" Icon="pack://application:,,,/m.ico" AllowDrop="True" 
+        DragEnter="Window_DragEnter_1" Drop="Window_Drop_1">
+    <Window.Resources>
+        <CollectionViewSource x:Key="SortedNodes" Source="{Binding CurrentNode.Children}">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Name"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+        <DataTemplate x:Key="NodeViewTemplate">
+            <StackPanel Orientation="Horizontal">
+                <Label Content=">">
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Type}"  Value="1">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Type}"  Value="-1">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
+                <Label>
+                    <Binding Path="Name"/>
+                </Label>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="TransferViewTemplate">
+            <StackPanel Orientation="Horizontal">
+                <Label>
+                    <Binding Path="Node.Attributes.Name"/>
+                </Label>
+                <ProgressBar Value="{Binding Progress, Mode=OneWay}" Minimum="0" Maximum="100" Width="40px" Height="18px" />
+                <Label>
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Success</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Content" Value="Success"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Downloading</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Content" Value="Downloading"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Uploading</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Content" Value="Uploading"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Pending</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Content" Value="Pending"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Error</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Content" Value="Error"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Cancelled</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Content" Value="Cancelled"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
+                <Label ContentStringFormat="{}{0:F2} MB/s" Content="{Binding Path=Speed}"/>
+
+                <Button Content="Cancel" Command="{Binding DataContext.CancelTransferCommand, ElementName=ParentWindow}" 
+                        CommandParameter="{Binding}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <TextBlock TextDecorations="Underline" VerticalAlignment="Center">
+                                <ContentPresenter />
+                            </TextBlock>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Foreground" Value="Blue" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Cancelled</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Success</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Error</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Foreground" Value="Red" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="Remove" Command="{Binding DataContext.RemoveTransferCommand, ElementName=ParentWindow}"
+                        CommandParameter="{Binding}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <TextBlock TextDecorations="Underline" VerticalAlignment="Center">
+                                <ContentPresenter />
+                            </TextBlock>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Foreground" Value="Blue" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Uploading</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Downloading</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Path=Status}">
+                                    <DataTrigger.Value>
+                                        <local:TransferHandleStatus>Pending</local:TransferHandleStatus>
+                                    </DataTrigger.Value>
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Foreground" Value="Red" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </DataTemplate>
+        <BooleanToVisibilityConverter x:Key="boolToVis"/>
+    </Window.Resources>
+    <Grid>
+        <Grid x:Name="RootContainer">
+            <DockPanel Height="80" HorizontalAlignment="Stretch" Name="dockPanel1" VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal">
+                    <Button Height="50" Name="buttonUpload" Width="50" HorizontalAlignment="Left" Command="{Binding UploadCommand}"
+                            ToolTip="Upload" Margin="10,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/upload.png" />
+                    </Button>
+                    <Button Height="50" Name="buttonDownload" Width="50" HorizontalAlignment="Left" Margin="10 0 0 0" Command="{Binding DownloadNodesCommand}"
+                            IsEnabled="{Binding CanDownload}" CommandParameter="{Binding SelectedNode}" ToolTip="Download">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Opacity" Value="1"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/download.png" />
+                    </Button>
+                    <Button Height="50" Name="buttonDelete" Width="50" HorizontalAlignment="Left" Margin="3,0,0,0" 
+                             ToolTip="Delete" Command="{Binding DeleteCommand}" CommandParameter="{Binding SelectedNode}">
+                        <!--IsEnabled="{Binding CanDelete}"-->
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/remove.png" Height="26" />
+                    </Button>
+                    <Button Height="50" Name="buttonLogin" Width="50" Visibility="Collapsed" Margin="10,0,0,0" ToolTip="Login" Click="buttonLogin_Click" >
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/login.png"  Height="36"/>
+                    </Button>
+                    <Button Height="50" Name="buttonLogout" Width="50" Visibility="Collapsed" Margin="10,0,0,0"  IsEnabled="{Binding CanOperate}" ToolTip="Logout" Click="buttonLogout_Click" >
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/logout.png" Height="20" />
+                    </Button>
+                    <Button Height="50" Name="buttonRefresh" Width="50" HorizontalAlignment="Left" IsEnabled="{Binding CanOperate}" Command="{Binding RefreshNodesCommand}" ToolTip="Refresh" Margin="10,0,0,0" >
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/refresh.png" Height="40"/>
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Height="50" Name="buttonConfiguration" Width="50" HorizontalAlignment="Right" Command="{Binding ShowConfigurationCommand}" IsEnabled="true" ToolTip="Configuration" Margin="0,0,10,0" >
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/cog.png" Height="20"/>
+                    </Button>
+                    <Button Height="50" Name="buttonFeedback" Width="50" HorizontalAlignment="Right" IsEnabled="true" ToolTip="Send feedback" Margin="0,0,10,0" Command="{Binding GoToFeedbackSiteCommand}" >
+                        <Image Source="pack://application:,,,/MegaDesktop;component/resources/bug.png" Height="20"/>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+            <DockPanel  HorizontalAlignment="Stretch" Margin="0,80,0,150" Name="dockPanel2" VerticalAlignment="Stretch" DataContext="{Binding CurrentNode}">
+                <Border DockPanel.Dock="Top" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" BorderThickness="0,3,0,0" BorderBrush="#FFF40303">
+                    <StackPanel Orientation="Horizontal" Background="#E8E8E8">
+                        <Button Height="24px" Width="24px" Command="{Binding DataContext.BackNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <Button.Template>
+                                <ControlTemplate>
+                                    <Grid x:Name="bg">
+                                        <Image Margin="4" Source="pack://application:,,,/MegaDesktop;component/resources/arrow-left.png"></Image>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bg" Property="Opacity" Value="0.6" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="bg" Property="Opacity" Value="0.3" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Label Content="{Binding Name}" Foreground="#333333" FontSize="14px" FontWeight="Bold"></Label>
+                    </StackPanel>
+                </Border>
+                <Grid DockPanel.Dock="Top" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="30px" Background="#FF3639">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.Status, RelativeSource={RelativeSource AncestorType=Window}}"  Value="4">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Image anigif:ImageBehavior.AnimatedSource="Images/loading-bar.gif" Height="16" Width="16" />
+                        <Label Foreground="White" FontSize="14" FontWeight="Bold">Loading</Label>
+                    </StackPanel>
+                </Grid>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#E8E8E8">
+                    <Label>File Number:</Label>
+                    <Label Content="{Binding DataContext.FileNodesCount, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <Label Margin="0,0,5,0">Total Size:</Label>
+                    <Label Content="{Binding DataContext.FileNodesSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </StackPanel>
+                <ListBox Name="listBoxNodes" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemTemplate="{StaticResource NodeViewTemplate}" 
+                     IsEnabled="{Binding PickNodeEnabled}"
+                     SelectedItem="{Binding DataContext.SelectedNode, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=Window}}" 
+                     ItemsSource="{Binding Source={StaticResource SortedNodes}}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseDoubleClick">
+                            <i:InvokeCommandAction Command="{Binding DataContext.MoveIntoNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </ListBox>
+            </DockPanel>
+            <DockPanel VerticalAlignment="Bottom" Margin="0,0,0,25">
+                <Grid HorizontalAlignment="Stretch" DockPanel.Dock="Bottom" Width="Auto">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{Binding CancelAllTransferCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="pack://application:,,,/MegaDesktop;component/resources/stop.png" Width="16" Height="16" />
+                            <Label Margin="5,0,0,0" Padding="0">Cancel All</Label>
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="1" Command="{Binding RemoveAllTransfersCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="pack://application:,,,/MegaDesktop;component/resources/trash.png" Width="16" Height="16" />
+                            <Label Margin="5,0,0,0" Padding="0">Remove Completed</Label>
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="pack://application:,,,/MegaDesktop;component/resources/pause.png" Width="16" Height="16" />
+                            <Label Margin="5,0,0,0" Padding="0">Pause All</Label>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <ListBox Height="100" HorizontalAlignment="Stretch" Name="listBoxDownloads" ItemsSource="{Binding Transfers}" 
+                     VerticalAlignment="Bottom" ItemTemplate="{StaticResource TransferViewTemplate}"/>
+            </DockPanel>
+
+            <DockPanel Height="25" VerticalAlignment="Bottom">
+                <TextBox Name="textBoxStatus" Padding="3" HorizontalAlignment="Left" Text="{Binding StatusText, Mode=OneWay}" FontSize="14" IsReadOnly="True" BorderThickness="0"/>
+                <Button x:Name="HomeLink" Content="http://megadesktop.com/" HorizontalAlignment="Right" Command="{Binding GoToAuthorSiteCommand}" FontSize="12" Margin="0,0,5,0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <TextBlock TextDecorations="Underline" VerticalAlignment="Center">
+                                <ContentPresenter />
+                            </TextBlock>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Foreground" Value="Blue" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Foreground" Value="Red" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </DockPanel>
+            <!-- Below this, at higher Z-Order place a control to gray out the screen when IsBusy = true -->
+            <Border Background="#55808080" BorderThickness="0" Visibility="{Binding IsBusy, Converter={StaticResource boolToVis}}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Image Source="pack://application:,,,/MegaDesktop;component/resources/lock.png" Width="48px" Height="48px" />
+                    <TextBlock Text="Authenticating" FontSize="32" Background="#F1C11E" FontWeight="Bold" Foreground="White" Padding="5 0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        <controls:ConfigurationModalDialog DataContext="{Binding ConfigurationModel}" OverlayOn="{Binding ElementName=RootContainer, Mode=OneWay}" IsShown="{Binding Path=IsConfigurationDialogVisible, Mode=TwoWay}"/>
+    </Grid>
+</Window>
