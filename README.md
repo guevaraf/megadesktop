@@ -1,19 +1,34 @@
-### Mega Desktop
+### This is a forking from Mega Desktop
+https://github.com/sybil-sink/megadesktop
 
-### Hi there!
+Which is a great tool for accesing Mega in an explorer kind of fashion. Though it is still in a ruff state regarding usability
+and responsiveness.
+
+I forked this project out to help improve the usage of WPF and the look & feel of the app.
+
+Also, to improve both application's (Desktop & Sync) functionality. The objective is to have something as good as 
+TortoiseSVN for exploring and as Dropbox's sync app...or even better, ;).
+
+### Hi there! (I'm leaving this as a description)
 Mega Desktop is a Windows client for Mega.co.nz service. 
 Currently we support anonymous and registered Mega's accounts, simple uploading/downloading files, and sync.
 The synch needs more testing though. [Follow us](https://twitter.com/Mega_Desktop) for the fresh news!
 
-### Features
-- Sync (like Dropbox)
-- Drag&drop upload
-- Large file support
-- Music/Movie streaming (Coming soon!)
-- [.NET API](https://github.com/sybil-sink/mega-sdk)
+### Changes
+- New and improved UI
+- Cancel All & Remove Completed functionality
+- Skip duplicated files
+- File count & total folder size count
+- Configuration Popup
 
-### Download
+### Notes
+- Removed Sync from the Desktop solution & the UI (temporarily)
+
+### Download source code and compile...or
+All required files should be inside the repo
+
+### ...Download Original
 http://megadesktop.com/files/Install-Mega-Desktop-v0.75b.exe (BETA!)
 
 ### Contact
-[UserVoice](http://megadesktop.uservoice.com/forums/191321-general) | team@megadesktop.com | [@Mega_Desktop](https://twitter.com/Mega_Desktop)
+guevara.fernando@gmail.com
